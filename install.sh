@@ -34,13 +34,11 @@ fi
 echo "Enter your Proxmox VE details:"
 echo ""
 printf "Proxmox Host URL (e.g., https://192.168.1.100:8006): "
-read PROXMOX_HOST < /dev/tty
+read -r PROXMOX_HOST < /dev/tty
 printf "API Token ID (e.g., root@pam!claude): "
-read PROXMOX_TOKEN_ID < /dev/tty
+read -r PROXMOX_TOKEN_ID < /dev/tty
 printf "API Token Secret: "
-stty -echo < /dev/tty
-read PROXMOX_TOKEN_SECRET < /dev/tty
-stty echo < /dev/tty
+read -rs PROXMOX_TOKEN_SECRET < /dev/tty
 echo ""
 
 if [ -z "$PROXMOX_HOST" ] || [ -z "$PROXMOX_TOKEN_ID" ] || [ -z "$PROXMOX_TOKEN_SECRET" ]; then
