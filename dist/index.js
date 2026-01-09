@@ -40,7 +40,7 @@ async function proxmoxRequest(endpoint, method = "GET", body) {
 }
 const server = new Server({
     name: "proxmox-mcp",
-    version: "2.1.0",
+    version: "2.1.1",
 }, {
     capabilities: {
         tools: {},
@@ -237,10 +237,6 @@ const toolDefinitions = [
                     "type": "string",
                     "description": "Script that will be executed during various steps in the vms lifetime."
                 },
-                "hostpci[n]": {
-                    "type": "string",
-                    "description": "Map host PCI devices into guest."
-                },
                 "hotplug": {
                     "type": "string",
                     "description": "Selectively enable hotplug features. This is a comma separated list of hotplug features: 'network', 'disk', 'cpu', 'memory', 'usb' and 'cloudinit'. Use '0' to disable hotplug completely. Using '1' as value is an alias for the default `network,disk,usb`. USB hotplugging is possible for guests with ma",
@@ -255,10 +251,6 @@ const toolDefinitions = [
                         "1024"
                     ]
                 },
-                "ide[n]": {
-                    "type": "string",
-                    "description": "Use volume as IDE hard disk or CD-ROM (n is 0 to 3). Use the special syntax STORAGE_ID:SIZE_IN_GiB to allocate a new volume. Use STORAGE_ID:0 and the 'import-from' parameter to import from an existing volume."
-                },
                 "import-working-storage": {
                     "type": "string",
                     "description": "A file-based storage with 'images' content-type enabled, which is used as an intermediary extraction storage during import. Defaults to the source storage."
@@ -266,10 +258,6 @@ const toolDefinitions = [
                 "intel-tdx": {
                     "type": "string",
                     "description": "Trusted Domain Extension (TDX) features by Intel CPUs"
-                },
-                "ipconfig[n]": {
-                    "type": "string",
-                    "description": "cloud-init: Specify IP addresses and gateways for the corresponding interface.\n\nIP addresses use CIDR notation, gateways are optional but need an IP of the same type specified.\n\nThe special string 'dhcp' can be used for IP addresses to use DHCP, in which case no explicit\ngateway should be provided.\n"
                 },
                 "ivshmem": {
                     "type": "string",
@@ -366,18 +354,10 @@ const toolDefinitions = [
                     "type": "string",
                     "description": "cloud-init: Sets DNS server IP address for a container. Create will automatically use the setting from the host if neither searchdomain nor nameserver are set."
                 },
-                "net[n]": {
-                    "type": "string",
-                    "description": "Specify network devices."
-                },
                 "numa": {
                     "type": "boolean",
                     "description": "Enable/disable NUMA.",
                     "default": 0
-                },
-                "numa[n]": {
-                    "type": "string",
-                    "description": "NUMA topology."
                 },
                 "onboot": {
                     "type": "boolean",
@@ -404,10 +384,6 @@ const toolDefinitions = [
                     ],
                     "default": "other"
                 },
-                "parallel[n]": {
-                    "type": "string",
-                    "description": "Map host parallel devices (n is 0 to 2)."
-                },
                 "pool": {
                     "type": "string",
                     "description": "Add the VM to the specified pool."
@@ -426,14 +402,6 @@ const toolDefinitions = [
                     "type": "string",
                     "description": "Configure a VirtIO-based Random Number Generator."
                 },
-                "sata[n]": {
-                    "type": "string",
-                    "description": "Use volume as SATA hard disk or CD-ROM (n is 0 to 5). Use the special syntax STORAGE_ID:SIZE_IN_GiB to allocate a new volume. Use STORAGE_ID:0 and the 'import-from' parameter to import from an existing volume."
-                },
-                "scsi[n]": {
-                    "type": "string",
-                    "description": "Use volume as SCSI hard disk or CD-ROM (n is 0 to 30). Use the special syntax STORAGE_ID:SIZE_IN_GiB to allocate a new volume. Use STORAGE_ID:0 and the 'import-from' parameter to import from an existing volume."
-                },
                 "scsihw": {
                     "type": "string",
                     "description": "SCSI controller model",
@@ -450,10 +418,6 @@ const toolDefinitions = [
                 "searchdomain": {
                     "type": "string",
                     "description": "cloud-init: Sets DNS search domains for a container. Create will automatically use the setting from the host if neither searchdomain nor nameserver are set."
-                },
-                "serial[n]": {
-                    "type": "string",
-                    "description": "Create a serial device inside the VM (n is 0 to 3)"
                 },
                 "shares": {
                     "type": "number",
@@ -527,14 +491,6 @@ const toolDefinitions = [
                     "type": "boolean",
                     "description": "Assign a unique random ethernet address."
                 },
-                "unused[n]": {
-                    "type": "string",
-                    "description": "Reference to unused volumes. This is used internally, and should not be modified manually."
-                },
-                "usb[n]": {
-                    "type": "string",
-                    "description": "Configure an USB device (n is 0 to 4, for machine version >= 7.1 and ostype l26 or windows > 7, n can be up to 14)."
-                },
                 "vcpus": {
                     "type": "number",
                     "description": "Number of hotplugged vcpus.",
@@ -543,14 +499,6 @@ const toolDefinitions = [
                 "vga": {
                     "type": "string",
                     "description": "Configure the VGA hardware."
-                },
-                "virtio[n]": {
-                    "type": "string",
-                    "description": "Use volume as VIRTIO hard disk (n is 0 to 15). Use the special syntax STORAGE_ID:SIZE_IN_GiB to allocate a new volume. Use STORAGE_ID:0 and the 'import-from' parameter to import from an existing volume."
-                },
-                "virtiofs[n]": {
-                    "type": "string",
-                    "description": "Configuration for sharing a directory between host and guest using Virtio-fs."
                 },
                 "vmgenid": {
                     "type": "string",
@@ -828,10 +776,6 @@ const toolDefinitions = [
                     "type": "string",
                     "description": "Script that will be executed during various steps in the vms lifetime."
                 },
-                "hostpci[n]": {
-                    "type": "string",
-                    "description": "Map host PCI devices into guest."
-                },
                 "hotplug": {
                     "type": "string",
                     "description": "Selectively enable hotplug features. This is a comma separated list of hotplug features: 'network', 'disk', 'cpu', 'memory', 'usb' and 'cloudinit'. Use '0' to disable hotplug completely. Using '1' as value is an alias for the default `network,disk,usb`. USB hotplugging is possible for guests with ma",
@@ -846,10 +790,6 @@ const toolDefinitions = [
                         "1024"
                     ]
                 },
-                "ide[n]": {
-                    "type": "string",
-                    "description": "Use volume as IDE hard disk or CD-ROM (n is 0 to 3). Use the special syntax STORAGE_ID:SIZE_IN_GiB to allocate a new volume. Use STORAGE_ID:0 and the 'import-from' parameter to import from an existing volume."
-                },
                 "import-working-storage": {
                     "type": "string",
                     "description": "A file-based storage with 'images' content-type enabled, which is used as an intermediary extraction storage during import. Defaults to the source storage."
@@ -857,10 +797,6 @@ const toolDefinitions = [
                 "intel-tdx": {
                     "type": "string",
                     "description": "Trusted Domain Extension (TDX) features by Intel CPUs"
-                },
-                "ipconfig[n]": {
-                    "type": "string",
-                    "description": "cloud-init: Specify IP addresses and gateways for the corresponding interface.\n\nIP addresses use CIDR notation, gateways are optional but need an IP of the same type specified.\n\nThe special string 'dhcp' can be used for IP addresses to use DHCP, in which case no explicit\ngateway should be provided.\n"
                 },
                 "ivshmem": {
                     "type": "string",
@@ -953,18 +889,10 @@ const toolDefinitions = [
                     "type": "string",
                     "description": "cloud-init: Sets DNS server IP address for a container. Create will automatically use the setting from the host if neither searchdomain nor nameserver are set."
                 },
-                "net[n]": {
-                    "type": "string",
-                    "description": "Specify network devices."
-                },
                 "numa": {
                     "type": "boolean",
                     "description": "Enable/disable NUMA.",
                     "default": 0
-                },
-                "numa[n]": {
-                    "type": "string",
-                    "description": "NUMA topology."
                 },
                 "onboot": {
                     "type": "boolean",
@@ -991,10 +919,6 @@ const toolDefinitions = [
                     ],
                     "default": "other"
                 },
-                "parallel[n]": {
-                    "type": "string",
-                    "description": "Map host parallel devices (n is 0 to 2)."
-                },
                 "protection": {
                     "type": "boolean",
                     "description": "Sets the protection flag of the VM. This will disable the remove VM and remove disk operations.",
@@ -1013,14 +937,6 @@ const toolDefinitions = [
                     "type": "string",
                     "description": "Configure a VirtIO-based Random Number Generator."
                 },
-                "sata[n]": {
-                    "type": "string",
-                    "description": "Use volume as SATA hard disk or CD-ROM (n is 0 to 5). Use the special syntax STORAGE_ID:SIZE_IN_GiB to allocate a new volume. Use STORAGE_ID:0 and the 'import-from' parameter to import from an existing volume."
-                },
-                "scsi[n]": {
-                    "type": "string",
-                    "description": "Use volume as SCSI hard disk or CD-ROM (n is 0 to 30). Use the special syntax STORAGE_ID:SIZE_IN_GiB to allocate a new volume. Use STORAGE_ID:0 and the 'import-from' parameter to import from an existing volume."
-                },
                 "scsihw": {
                     "type": "string",
                     "description": "SCSI controller model",
@@ -1037,10 +953,6 @@ const toolDefinitions = [
                 "searchdomain": {
                     "type": "string",
                     "description": "cloud-init: Sets DNS search domains for a container. Create will automatically use the setting from the host if neither searchdomain nor nameserver are set."
-                },
-                "serial[n]": {
-                    "type": "string",
-                    "description": "Create a serial device inside the VM (n is 0 to 3)"
                 },
                 "shares": {
                     "type": "number",
@@ -1105,14 +1017,6 @@ const toolDefinitions = [
                     "type": "string",
                     "description": "Configure a Disk for storing TPM state. The format is fixed to 'raw'. Use the special syntax STORAGE_ID:SIZE_IN_GiB to allocate a new volume. Note that SIZE_IN_GiB is ignored here and 4 MiB will be used instead. Use STORAGE_ID:0 and the 'import-from' parameter to import from an existing volume."
                 },
-                "unused[n]": {
-                    "type": "string",
-                    "description": "Reference to unused volumes. This is used internally, and should not be modified manually."
-                },
-                "usb[n]": {
-                    "type": "string",
-                    "description": "Configure an USB device (n is 0 to 4, for machine version >= 7.1 and ostype l26 or windows > 7, n can be up to 14)."
-                },
                 "vcpus": {
                     "type": "number",
                     "description": "Number of hotplugged vcpus.",
@@ -1121,14 +1025,6 @@ const toolDefinitions = [
                 "vga": {
                     "type": "string",
                     "description": "Configure the VGA hardware."
-                },
-                "virtio[n]": {
-                    "type": "string",
-                    "description": "Use volume as VIRTIO hard disk (n is 0 to 15). Use the special syntax STORAGE_ID:SIZE_IN_GiB to allocate a new volume. Use STORAGE_ID:0 and the 'import-from' parameter to import from an existing volume."
-                },
-                "virtiofs[n]": {
-                    "type": "string",
-                    "description": "Configuration for sharing a directory between host and guest using Virtio-fs."
                 },
                 "vmgenid": {
                     "type": "string",
@@ -1307,10 +1203,6 @@ const toolDefinitions = [
                     "type": "string",
                     "description": "Script that will be executed during various steps in the vms lifetime."
                 },
-                "hostpci[n]": {
-                    "type": "string",
-                    "description": "Map host PCI devices into guest."
-                },
                 "hotplug": {
                     "type": "string",
                     "description": "Selectively enable hotplug features. This is a comma separated list of hotplug features: 'network', 'disk', 'cpu', 'memory', 'usb' and 'cloudinit'. Use '0' to disable hotplug completely. Using '1' as value is an alias for the default `network,disk,usb`. USB hotplugging is possible for guests with ma",
@@ -1325,17 +1217,9 @@ const toolDefinitions = [
                         "1024"
                     ]
                 },
-                "ide[n]": {
-                    "type": "string",
-                    "description": "Use volume as IDE hard disk or CD-ROM (n is 0 to 3). Use the special syntax STORAGE_ID:SIZE_IN_GiB to allocate a new volume. Use STORAGE_ID:0 and the 'import-from' parameter to import from an existing volume."
-                },
                 "intel-tdx": {
                     "type": "string",
                     "description": "Trusted Domain Extension (TDX) features by Intel CPUs"
-                },
-                "ipconfig[n]": {
-                    "type": "string",
-                    "description": "cloud-init: Specify IP addresses and gateways for the corresponding interface.\n\nIP addresses use CIDR notation, gateways are optional but need an IP of the same type specified.\n\nThe special string 'dhcp' can be used for IP addresses to use DHCP, in which case no explicit\ngateway should be provided.\n"
                 },
                 "ivshmem": {
                     "type": "string",
@@ -1428,18 +1312,10 @@ const toolDefinitions = [
                     "type": "string",
                     "description": "cloud-init: Sets DNS server IP address for a container. Create will automatically use the setting from the host if neither searchdomain nor nameserver are set."
                 },
-                "net[n]": {
-                    "type": "string",
-                    "description": "Specify network devices."
-                },
                 "numa": {
                     "type": "boolean",
                     "description": "Enable/disable NUMA.",
                     "default": 0
-                },
-                "numa[n]": {
-                    "type": "string",
-                    "description": "NUMA topology."
                 },
                 "onboot": {
                     "type": "boolean",
@@ -1466,10 +1342,6 @@ const toolDefinitions = [
                     ],
                     "default": "other"
                 },
-                "parallel[n]": {
-                    "type": "string",
-                    "description": "Map host parallel devices (n is 0 to 2)."
-                },
                 "protection": {
                     "type": "boolean",
                     "description": "Sets the protection flag of the VM. This will disable the remove VM and remove disk operations.",
@@ -1488,14 +1360,6 @@ const toolDefinitions = [
                     "type": "string",
                     "description": "Configure a VirtIO-based Random Number Generator."
                 },
-                "sata[n]": {
-                    "type": "string",
-                    "description": "Use volume as SATA hard disk or CD-ROM (n is 0 to 5). Use the special syntax STORAGE_ID:SIZE_IN_GiB to allocate a new volume. Use STORAGE_ID:0 and the 'import-from' parameter to import from an existing volume."
-                },
-                "scsi[n]": {
-                    "type": "string",
-                    "description": "Use volume as SCSI hard disk or CD-ROM (n is 0 to 30). Use the special syntax STORAGE_ID:SIZE_IN_GiB to allocate a new volume. Use STORAGE_ID:0 and the 'import-from' parameter to import from an existing volume."
-                },
                 "scsihw": {
                     "type": "string",
                     "description": "SCSI controller model",
@@ -1512,10 +1376,6 @@ const toolDefinitions = [
                 "searchdomain": {
                     "type": "string",
                     "description": "cloud-init: Sets DNS search domains for a container. Create will automatically use the setting from the host if neither searchdomain nor nameserver are set."
-                },
-                "serial[n]": {
-                    "type": "string",
-                    "description": "Create a serial device inside the VM (n is 0 to 3)"
                 },
                 "shares": {
                     "type": "number",
@@ -1580,14 +1440,6 @@ const toolDefinitions = [
                     "type": "string",
                     "description": "Configure a Disk for storing TPM state. The format is fixed to 'raw'. Use the special syntax STORAGE_ID:SIZE_IN_GiB to allocate a new volume. Note that SIZE_IN_GiB is ignored here and 4 MiB will be used instead. Use STORAGE_ID:0 and the 'import-from' parameter to import from an existing volume."
                 },
-                "unused[n]": {
-                    "type": "string",
-                    "description": "Reference to unused volumes. This is used internally, and should not be modified manually."
-                },
-                "usb[n]": {
-                    "type": "string",
-                    "description": "Configure an USB device (n is 0 to 4, for machine version >= 7.1 and ostype l26 or windows > 7, n can be up to 14)."
-                },
                 "vcpus": {
                     "type": "number",
                     "description": "Number of hotplugged vcpus.",
@@ -1596,14 +1448,6 @@ const toolDefinitions = [
                 "vga": {
                     "type": "string",
                     "description": "Configure the VGA hardware."
-                },
-                "virtio[n]": {
-                    "type": "string",
-                    "description": "Use volume as VIRTIO hard disk (n is 0 to 15). Use the special syntax STORAGE_ID:SIZE_IN_GiB to allocate a new volume. Use STORAGE_ID:0 and the 'import-from' parameter to import from an existing volume."
-                },
-                "virtiofs[n]": {
-                    "type": "string",
-                    "description": "Configuration for sharing a directory between host and guest using Virtio-fs."
                 },
                 "vmgenid": {
                     "type": "string",
@@ -2302,10 +2146,6 @@ const toolDefinitions = [
                     "type": "string",
                     "description": "Description for the Container. Shown in the web-interface CT's summary. This is saved as comment inside the configuration file."
                 },
-                "dev[n]": {
-                    "type": "string",
-                    "description": "Device to pass through to the container"
-                },
                 "entrypoint": {
                     "type": "string",
                     "description": "Command to run as init, optionally with arguments; may start with an absolute path, relative path, or a binary in $PATH.",
@@ -2361,17 +2201,9 @@ const toolDefinitions = [
                     "description": "Amount of RAM for the container in MB.",
                     "default": 512
                 },
-                "mp[n]": {
-                    "type": "string",
-                    "description": "Use volume as container mount point. Use the special syntax STORAGE_ID:SIZE_IN_GiB to allocate a new volume."
-                },
                 "nameserver": {
                     "type": "string",
                     "description": "Sets DNS server IP address for a container. Create will automatically use the setting from the host if you neither set searchdomain nor nameserver."
-                },
-                "net[n]": {
-                    "type": "string",
-                    "description": "Specifies network interfaces for the container."
                 },
                 "onboot": {
                     "type": "boolean",
@@ -2473,10 +2305,6 @@ const toolDefinitions = [
                     "type": "boolean",
                     "description": "Makes the container run as unprivileged user. For creation, the default is 1. For restore, the default is the value from the backup. (Should not be modified manually.)",
                     "default": 0
-                },
-                "unused[n]": {
-                    "type": "string",
-                    "description": "Reference to unused volumes. This is used internally, and should not be modified manually."
                 },
                 "vmid": {
                     "type": "number",
@@ -2653,10 +2481,6 @@ const toolDefinitions = [
                     "type": "string",
                     "description": "Description for the Container. Shown in the web-interface CT's summary. This is saved as comment inside the configuration file."
                 },
-                "dev[n]": {
-                    "type": "string",
-                    "description": "Device to pass through to the container"
-                },
                 "digest": {
                     "type": "string",
                     "description": "Prevent changes if current configuration file has different SHA1 digest. This can be used to prevent concurrent modifications."
@@ -2703,17 +2527,9 @@ const toolDefinitions = [
                     "description": "Amount of RAM for the container in MB.",
                     "default": 512
                 },
-                "mp[n]": {
-                    "type": "string",
-                    "description": "Use volume as container mount point. Use the special syntax STORAGE_ID:SIZE_IN_GiB to allocate a new volume."
-                },
                 "nameserver": {
                     "type": "string",
                     "description": "Sets DNS server IP address for a container. Create will automatically use the setting from the host if you neither set searchdomain nor nameserver."
-                },
-                "net[n]": {
-                    "type": "string",
-                    "description": "Specifies network interfaces for the container."
                 },
                 "onboot": {
                     "type": "boolean",
@@ -2785,10 +2601,6 @@ const toolDefinitions = [
                     "type": "boolean",
                     "description": "Makes the container run as unprivileged user. For creation, the default is 1. For restore, the default is the value from the backup. (Should not be modified manually.)",
                     "default": 0
-                },
-                "unused[n]": {
-                    "type": "string",
-                    "description": "Reference to unused volumes. This is used internally, and should not be modified manually."
                 }
             },
             "required": [
