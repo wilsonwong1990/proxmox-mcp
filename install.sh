@@ -26,9 +26,14 @@ fi
 # Get Proxmox credentials (read from /dev/tty to work with curl | bash)
 echo "Enter your Proxmox VE details:"
 echo ""
-read -p "Proxmox Host URL (e.g., https://192.168.1.100:8006): " PROXMOX_HOST < /dev/tty
-read -p "API Token ID (e.g., root@pam!claude): " PROXMOX_TOKEN_ID < /dev/tty
-read -sp "API Token Secret: " PROXMOX_TOKEN_SECRET < /dev/tty
+printf "Proxmox Host URL (e.g., https://192.168.1.100:8006): "
+read PROXMOX_HOST < /dev/tty
+printf "API Token ID (e.g., root@pam!claude): "
+read PROXMOX_TOKEN_ID < /dev/tty
+printf "API Token Secret: "
+stty -echo < /dev/tty
+read PROXMOX_TOKEN_SECRET < /dev/tty
+stty echo < /dev/tty
 echo ""
 
 if [ -z "$PROXMOX_HOST" ] || [ -z "$PROXMOX_TOKEN_ID" ] || [ -z "$PROXMOX_TOKEN_SECRET" ]; then
