@@ -59,7 +59,7 @@ async function proxmoxRequest(
 const server = new Server(
   {
     name: "proxmox-mcp",
-    version: "2.1.1",
+    version: "2.2.0",
   },
   {
     capabilities: {
@@ -544,6 +544,10 @@ const toolDefinitions: Array<{
         "watchdog": {
           "type": "string",
           "description": "Create a virtual hardware watchdog device."
+        },
+        "net0": {
+          "type": "string",
+          "description": "Network config: model=virtio,bridge=vmbr0"
         }
       },
       "required": [
@@ -2337,6 +2341,10 @@ const toolDefinitions: Array<{
         "vmid": {
           "type": "number",
           "description": "The (unique) ID of the VM."
+        },
+        "net0": {
+          "type": "string",
+          "description": "Network config: name=eth0,bridge=vmbr0,ip=dhcp or ip=x.x.x.x/24,gw=x.x.x.x"
         }
       },
       "required": [
