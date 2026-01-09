@@ -4,15 +4,17 @@ MCP (Model Context Protocol) server for the Proxmox VE API. Manage virtual machi
 
 ## Features
 
-**120+ tools** covering the full Proxmox VE API:
+**600+ tools** providing comprehensive coverage of the Proxmox VE 8/9 API:
 
-- **Access Control**: Users, groups, roles, ACLs, authentication domains
-- **Cluster**: Status, resources, options, backup jobs, HA, firewall, replication
-- **Nodes**: Status, services, network, storage, disks, certificates, APT
-- **QEMU VMs**: Full lifecycle (create, start, stop, migrate, clone, snapshot, backup)
-- **LXC Containers**: Full lifecycle (create, start, stop, migrate, clone, snapshot)
-- **Storage**: Configuration, content management, uploads, downloads
-- **Resource Pools**: Pool management and membership
+- **Access Control** (45 tools): Users, groups, roles, ACLs, authentication domains, TFA, tickets, permissions
+- **Cluster** (232 tools): Status, resources, options, backup jobs, HA, firewall, replication, ACME, Ceph, SDN, metrics, notifications, mapping
+- **Nodes** (356 tools): Status, services, network, storage, disks, certificates, APT, QEMU VMs, LXC containers, Ceph, hardware, tasks, syslog
+- **QEMU VMs**: Full lifecycle (create, start, stop, migrate, clone, snapshot, backup), agent commands, firewall, cloudinit
+- **LXC Containers**: Full lifecycle (create, start, stop, migrate, clone, snapshot), firewall, features
+- **Storage** (5 tools): Configuration, content management
+- **Resource Pools** (7 tools): Pool management and membership
+
+This MCP server is auto-generated from the official Proxmox VE API schema (apidoc.js) to ensure complete API coverage.
 
 ## Quick Install
 
@@ -75,65 +77,72 @@ Add to your Claude Code config (`~/.config/claude/claude_desktop_config.json` on
 | `PROXMOX_TOKEN_ID` | API Token ID | `root@pam!claude` |
 | `PROXMOX_TOKEN_SECRET` | API Token Secret | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` |
 
-## Available Tools
+## Tool Categories
 
 ### Access Control
-- `pve_list_users`, `pve_get_user`, `pve_create_user`, `pve_update_user`, `pve_delete_user`
-- `pve_list_groups`, `pve_get_group`, `pve_create_group`, `pve_update_group`, `pve_delete_group`
-- `pve_list_roles`, `pve_get_role`, `pve_create_role`, `pve_update_role`, `pve_delete_role`
-- `pve_get_acl`, `pve_update_acl`
-- `pve_list_domains`, `pve_get_domain`
+- Users: `pve_list_access_users`, `pve_get_access_users`, `pve_create_access_users`, `pve_update_access_users`, `pve_delete_access_users`
+- Groups: `pve_list_access_groups`, `pve_get_access_groups`, `pve_create_access_groups`, `pve_update_access_groups`, `pve_delete_access_groups`
+- Roles: `pve_list_access_roles`, `pve_get_access_roles`, `pve_create_access_roles`, `pve_update_access_roles`, `pve_delete_access_roles`
+- ACLs: `pve_list_access_acl`, `pve_update_access_acl`
+- Domains: `pve_list_access_domains`, `pve_get_access_domains`, `pve_create_access_domains`, `pve_update_access_domains`, `pve_delete_access_domains`
+- TFA: `pve_list_access_tfa`, `pve_get_access_tfa`, `pve_create_access_tfa`, `pve_update_access_tfa`, `pve_delete_access_tfa`
+- Tickets: `pve_create_access_ticket`, `pve_get_access_permissions`
 
 ### Cluster
-- `pve_cluster_status`, `pve_cluster_resources`, `pve_cluster_tasks`
-- `pve_cluster_options`, `pve_cluster_set_options`, `pve_cluster_nextid`, `pve_cluster_log`
-- `pve_list_backup_jobs`, `pve_get_backup_job`, `pve_create_backup_job`, `pve_update_backup_job`, `pve_delete_backup_job`
-- `pve_ha_status`, `pve_list_ha_resources`, `pve_get_ha_resource`, `pve_create_ha_resource`, `pve_update_ha_resource`, `pve_delete_ha_resource`
-- `pve_list_ha_groups`, `pve_get_ha_group`, `pve_create_ha_group`, `pve_update_ha_group`, `pve_delete_ha_group`
-- `pve_cluster_firewall_options`, `pve_set_cluster_firewall_options`, `pve_list_cluster_firewall_rules`, `pve_create_cluster_firewall_rule`
-- `pve_list_security_groups`, `pve_create_security_group`, `pve_list_ipsets`, `pve_create_ipset`
-- `pve_list_firewall_aliases`, `pve_create_firewall_alias`
-- `pve_list_replication_jobs`, `pve_get_replication_job`, `pve_create_replication_job`, `pve_delete_replication_job`
+- Status: `pve_list_cluster_status`, `pve_list_cluster_resources`, `pve_get_cluster_options`, `pve_update_cluster_options`
+- Backup: `pve_list_cluster_backup`, `pve_get_cluster_backup`, `pve_create_cluster_backup`, `pve_update_cluster_backup`, `pve_delete_cluster_backup`
+- HA: `pve_list_cluster_ha_resources`, `pve_get_cluster_ha_resources`, `pve_create_cluster_ha_resources`, `pve_update_cluster_ha_resources`, `pve_delete_cluster_ha_resources`
+- HA Groups: `pve_list_cluster_ha_groups`, `pve_get_cluster_ha_groups`, `pve_create_cluster_ha_groups`, `pve_update_cluster_ha_groups`, `pve_delete_cluster_ha_groups`
+- Firewall: `pve_list_cluster_firewall_rules`, `pve_create_cluster_firewall_rules`, `pve_get_cluster_firewall_options`, `pve_update_cluster_firewall_options`
+- Security Groups: `pve_list_cluster_firewall_groups`, `pve_create_cluster_firewall_groups`
+- IP Sets: `pve_list_cluster_firewall_ipset`, `pve_create_cluster_firewall_ipset`
+- Aliases: `pve_list_cluster_firewall_aliases`, `pve_create_cluster_firewall_aliases`
+- Replication: `pve_list_cluster_replication`, `pve_get_cluster_replication`, `pve_create_cluster_replication`, `pve_update_cluster_replication`, `pve_delete_cluster_replication`
+- ACME: `pve_list_cluster_acme_account`, `pve_create_cluster_acme_account`, `pve_list_cluster_acme_plugins`
+- Ceph: `pve_list_cluster_ceph_metadata`, `pve_get_cluster_ceph_status`, `pve_get_cluster_ceph_flags`
+- SDN: `pve_list_cluster_sdn_vnets`, `pve_list_cluster_sdn_zones`, `pve_list_cluster_sdn_controllers`, `pve_list_cluster_sdn_subnets`
+- Metrics: `pve_list_cluster_metrics_server`, `pve_create_cluster_metrics_server`
+- Notifications: `pve_list_cluster_notifications_endpoints`, `pve_list_cluster_notifications_matchers`, `pve_list_cluster_notifications_targets`
+- Mapping: `pve_list_cluster_mapping_pci`, `pve_list_cluster_mapping_usb`
 
 ### Nodes
-- `pve_list_nodes`, `pve_get_node_status`, `pve_get_node_version`
-- `pve_get_node_time`, `pve_set_node_time`, `pve_get_node_dns`, `pve_set_node_dns`
-- `pve_get_node_syslog`, `pve_get_node_journal`, `pve_get_node_subscription`, `pve_get_node_report`
-- `pve_node_start_all`, `pve_node_stop_all`
-- `pve_list_node_services`, `pve_get_node_service_state`, `pve_node_service_start`, `pve_node_service_stop`, `pve_node_service_restart`, `pve_node_service_reload`
-- `pve_list_node_networks`, `pve_get_node_network`, `pve_create_node_network`, `pve_update_node_network`, `pve_delete_node_network`, `pve_apply_node_network`, `pve_revert_node_network`
-- `pve_list_node_tasks`, `pve_get_node_task_status`, `pve_get_node_task_log`, `pve_stop_node_task`
-- `pve_list_node_storage`, `pve_get_node_storage_status`, `pve_list_node_storage_content`, `pve_upload_to_storage`, `pve_download_url_to_storage`, `pve_delete_storage_content`
-- `pve_list_node_disks`, `pve_get_node_disk_smart`, `pve_initialize_disk_gpt`, `pve_wipe_disk`
-- `pve_list_node_certificates`, `pve_get_node_acme`, `pve_order_node_certificate`, `pve_renew_node_certificate`
-- `pve_list_apt_updates`, `pve_apt_update`, `pve_apt_changelog`, `pve_apt_versions`
+- Status: `pve_list_nodes`, `pve_get_nodes_status`, `pve_get_nodes_version`, `pve_get_nodes_time`, `pve_update_nodes_time`
+- DNS: `pve_get_nodes_dns`, `pve_update_nodes_dns`
+- Network: `pve_list_nodes_network`, `pve_get_nodes_network`, `pve_create_nodes_network`, `pve_update_nodes_network`, `pve_delete_nodes_network`
+- Services: `pve_list_nodes_services`, `pve_get_nodes_services`, `pve_create_nodes_services_start`, `pve_create_nodes_services_stop`, `pve_create_nodes_services_restart`
+- Storage: `pve_list_nodes_storage`, `pve_get_nodes_storage_status`, `pve_list_nodes_storage_content`, `pve_create_nodes_storage_content`, `pve_delete_nodes_storage_content`
+- Disks: `pve_list_nodes_disks_list`, `pve_get_nodes_disks_smart`, `pve_create_nodes_disks_initgpt`
+- Certificates: `pve_list_nodes_certificates_info`, `pve_get_nodes_certificates_acme_certificate`, `pve_create_nodes_certificates_acme_certificate`
+- Tasks: `pve_list_nodes_tasks`, `pve_get_nodes_tasks_status`, `pve_get_nodes_tasks_log`, `pve_delete_nodes_tasks`
+- Syslog: `pve_get_nodes_syslog`, `pve_get_nodes_journal`
+- APT: `pve_list_nodes_apt_update`, `pve_create_nodes_apt_update`, `pve_get_nodes_apt_changelog`, `pve_get_nodes_apt_versions`
 
 ### QEMU Virtual Machines
-- `pve_list_vms`, `pve_get_vm_status`, `pve_get_vm_config`
-- `pve_create_vm`, `pve_update_vm_config`, `pve_delete_vm`
-- `pve_start_vm`, `pve_stop_vm`, `pve_shutdown_vm`, `pve_reboot_vm`, `pve_reset_vm`
-- `pve_suspend_vm`, `pve_resume_vm`
-- `pve_clone_vm`, `pve_migrate_vm`, `pve_convert_vm_to_template`
-- `pve_resize_vm_disk`, `pve_move_vm_disk`
-- `pve_list_vm_snapshots`, `pve_create_vm_snapshot`, `pve_get_vm_snapshot_config`, `pve_rollback_vm_snapshot`, `pve_delete_vm_snapshot`
-- `pve_backup_vm`
-- `pve_get_vm_firewall_options`, `pve_set_vm_firewall_options`, `pve_list_vm_firewall_rules`, `pve_create_vm_firewall_rule`
+- Lifecycle: `pve_list_nodes_qemu`, `pve_get_nodes_qemu_status_current`, `pve_create_nodes_qemu`, `pve_update_nodes_qemu_config`, `pve_delete_nodes_qemu`
+- Power: `pve_create_nodes_qemu_status_start`, `pve_create_nodes_qemu_status_stop`, `pve_create_nodes_qemu_status_shutdown`, `pve_create_nodes_qemu_status_reboot`, `pve_create_nodes_qemu_status_reset`
+- Suspend/Resume: `pve_create_nodes_qemu_status_suspend`, `pve_create_nodes_qemu_status_resume`
+- Clone/Migrate: `pve_create_nodes_qemu_clone`, `pve_create_nodes_qemu_migrate`, `pve_create_nodes_qemu_template`
+- Snapshots: `pve_list_nodes_qemu_snapshot`, `pve_create_nodes_qemu_snapshot`, `pve_get_nodes_qemu_snapshot_config`, `pve_create_nodes_qemu_snapshot_rollback`, `pve_delete_nodes_qemu_snapshot`
+- Disks: `pve_create_nodes_qemu_resize`, `pve_create_nodes_qemu_move_disk`, `pve_create_nodes_qemu_unlink`
+- Firewall: `pve_list_nodes_qemu_firewall_rules`, `pve_create_nodes_qemu_firewall_rules`, `pve_get_nodes_qemu_firewall_options`, `pve_update_nodes_qemu_firewall_options`
+- Agent: `pve_create_nodes_qemu_agent_ping`, `pve_get_nodes_qemu_agent_info`, `pve_get_nodes_qemu_agent_network_get_interfaces`, `pve_create_nodes_qemu_agent_exec`, `pve_get_nodes_qemu_agent_exec_status`, `pve_get_nodes_qemu_agent_file_read`, `pve_create_nodes_qemu_agent_file_write`
+- Cloudinit: `pve_get_nodes_qemu_cloudinit_dump`, `pve_update_nodes_qemu_cloudinit`
+- VNC/Spice: `pve_create_nodes_qemu_vncproxy`, `pve_get_nodes_qemu_vncwebsocket`, `pve_create_nodes_qemu_spiceproxy`, `pve_create_nodes_qemu_termproxy`
 
 ### LXC Containers
-- `pve_list_containers`, `pve_get_container_status`, `pve_get_container_config`
-- `pve_create_container`, `pve_update_container_config`, `pve_delete_container`
-- `pve_start_container`, `pve_stop_container`, `pve_shutdown_container`, `pve_reboot_container`
-- `pve_suspend_container`, `pve_resume_container`
-- `pve_clone_container`, `pve_migrate_container`, `pve_convert_container_to_template`
-- `pve_resize_container_disk`
-- `pve_list_container_snapshots`, `pve_create_container_snapshot`, `pve_rollback_container_snapshot`, `pve_delete_container_snapshot`
-- `pve_get_container_firewall_options`, `pve_set_container_firewall_options`, `pve_list_container_firewall_rules`
+- Lifecycle: `pve_list_nodes_lxc`, `pve_get_nodes_lxc_status_current`, `pve_create_nodes_lxc`, `pve_update_nodes_lxc_config`, `pve_delete_nodes_lxc`
+- Power: `pve_create_nodes_lxc_status_start`, `pve_create_nodes_lxc_status_stop`, `pve_create_nodes_lxc_status_shutdown`, `pve_create_nodes_lxc_status_reboot`
+- Suspend/Resume: `pve_create_nodes_lxc_status_suspend`, `pve_create_nodes_lxc_status_resume`
+- Clone/Migrate: `pve_create_nodes_lxc_clone`, `pve_create_nodes_lxc_migrate`, `pve_create_nodes_lxc_template`
+- Snapshots: `pve_list_nodes_lxc_snapshot`, `pve_create_nodes_lxc_snapshot`, `pve_get_nodes_lxc_snapshot_config`, `pve_create_nodes_lxc_snapshot_rollback`, `pve_delete_nodes_lxc_snapshot`
+- Firewall: `pve_list_nodes_lxc_firewall_rules`, `pve_create_nodes_lxc_firewall_rules`, `pve_get_nodes_lxc_firewall_options`, `pve_update_nodes_lxc_firewall_options`
+- VNC: `pve_create_nodes_lxc_vncproxy`, `pve_get_nodes_lxc_vncwebsocket`, `pve_create_nodes_lxc_termproxy`
 
 ### Storage
 - `pve_list_storage`, `pve_get_storage`, `pve_create_storage`, `pve_update_storage`, `pve_delete_storage`
 
 ### Resource Pools
-- `pve_list_pools`, `pve_get_pool`, `pve_create_pool`, `pve_update_pool`, `pve_delete_pool`
+- `pve_list_pools`, `pve_get_pools`, `pve_create_pools`, `pve_update_pools`, `pve_delete_pools`
 
 ## Example Usage
 
@@ -148,6 +157,9 @@ Once configured, you can ask Claude things like:
 - "Show available storage on the cluster"
 - "List backup jobs"
 - "Create a new user claude@pve with PVEAdmin role"
+- "Show Ceph status"
+- "List SDN virtual networks"
+- "Get the QEMU agent info for VM 100"
 
 ## Security Notes
 
@@ -168,6 +180,21 @@ Once configured, you can ask Claude things like:
 8. **Copy the Token Secret immediately** - it won't be shown again!
 
 Your Token ID will be: `root@pam!claude`
+
+## API Coverage
+
+This MCP server provides comprehensive coverage of the Proxmox VE API:
+
+| Category | Tools | Description |
+|----------|-------|-------------|
+| Access | 45 | Users, groups, roles, ACLs, domains, TFA |
+| Cluster | 232 | Status, backup, HA, firewall, replication, ACME, Ceph, SDN, metrics |
+| Nodes | 356 | Status, network, storage, disks, services, QEMU, LXC, tasks |
+| Storage | 5 | Storage configuration |
+| Pools | 7 | Resource pool management |
+| Version | 1 | API version info |
+
+**Total: 600+ tools**
 
 ## License
 
