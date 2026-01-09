@@ -7,6 +7,7 @@ set -e
 
 REPO_URL="https://github.com/Ruashots/proxmox-mcp.git"
 INSTALL_DIR="$HOME/.local/share/proxmox-mcp"
+CLAUDE_CONFIG_FILE="$HOME/.claude.json"
 
 echo "=== Proxmox MCP Server Installer ==="
 echo ""
@@ -20,6 +21,12 @@ fi
 
 if ! command -v git &> /dev/null; then
     echo "Error: git is required but not installed."
+    exit 1
+fi
+
+if ! command -v jq &> /dev/null; then
+    echo "Error: jq is required but not installed."
+    echo "Install it via: sudo apt install jq"
     exit 1
 fi
 
@@ -59,61 +66,38 @@ npm install
 echo "Building..."
 npm run build
 
-# Determine Claude Code config location
-if [ "$(uname)" == "Darwin" ]; then
-    CLAUDE_CONFIG_DIR="$HOME/Library/Application Support/Claude"
-else
-    CLAUDE_CONFIG_DIR="$HOME/.config/claude"
-fi
+# Update Claude Code configuration in ~/.claude.json
+echo "Updating Claude Code configuration..."
 
-CLAUDE_CONFIG_FILE="$CLAUDE_CONFIG_DIR/claude_desktop_config.json"
-
-# Create config directory if needed
-mkdir -p "$CLAUDE_CONFIG_DIR"
-
-# Create or update Claude Code config
-if [ -f "$CLAUDE_CONFIG_FILE" ]; then
-    echo "Updating Claude Code configuration..."
-    # Check if jq is available for JSON manipulation
-    if command -v jq &> /dev/null; then
-        # Use jq to add/update the proxmox-mcp server config
-        TMP_FILE=$(mktemp)
-        jq --arg host "$PROXMOX_HOST" \
-           --arg token_id "$PROXMOX_TOKEN_ID" \
-           --arg token_secret "$PROXMOX_TOKEN_SECRET" \
-           --arg install_dir "$INSTALL_DIR" \
-           '.mcpServers["proxmox-mcp"] = {
-               "command": "node",
-               "args": [($install_dir + "/dist/index.js")],
-               "env": {
-                   "PROXMOX_HOST": $host,
-                   "PROXMOX_TOKEN_ID": $token_id,
-                   "PROXMOX_TOKEN_SECRET": $token_secret
-               }
-           }' "$CLAUDE_CONFIG_FILE" > "$TMP_FILE"
-        mv "$TMP_FILE" "$CLAUDE_CONFIG_FILE"
-    else
-        echo "Warning: jq not found. Please manually add the proxmox-mcp configuration."
-        echo "See the README for configuration details."
-    fi
-else
-    echo "Creating Claude Code configuration..."
-    cat > "$CLAUDE_CONFIG_FILE" << EOF
-{
-  "mcpServers": {
-    "proxmox-mcp": {
-      "command": "node",
-      "args": ["$INSTALL_DIR/dist/index.js"],
-      "env": {
-        "PROXMOX_HOST": "$PROXMOX_HOST",
-        "PROXMOX_TOKEN_ID": "$PROXMOX_TOKEN_ID",
-        "PROXMOX_TOKEN_SECRET": "$PROXMOX_TOKEN_SECRET"
-      }
+# Create jq filter file to avoid shell escaping issues
+TMP_FILTER=$(mktemp)
+cat > "$TMP_FILTER" << JQEOF
+.mcpServers["proxmox-mcp"] = {
+    "command": "node",
+    "args": ["\$INSTALL_DIR/dist/index.js"],
+    "env": {
+        "PROXMOX_HOST": "\$PROXMOX_HOST",
+        "PROXMOX_TOKEN_ID": "\$PROXMOX_TOKEN_ID",
+        "PROXMOX_TOKEN_SECRET": "\$PROXMOX_TOKEN_SECRET"
     }
-  }
 }
-EOF
+JQEOF
+
+# Replace placeholders with actual values
+sed -i "s|\$INSTALL_DIR|$INSTALL_DIR|g" "$TMP_FILTER"
+sed -i "s|\$PROXMOX_HOST|$PROXMOX_HOST|g" "$TMP_FILTER"
+sed -i "s|\$PROXMOX_TOKEN_ID|$PROXMOX_TOKEN_ID|g" "$TMP_FILTER"
+sed -i "s|\$PROXMOX_TOKEN_SECRET|$PROXMOX_TOKEN_SECRET|g" "$TMP_FILTER"
+
+if [ -f "$CLAUDE_CONFIG_FILE" ]; then
+    TMP_FILE=$(mktemp)
+    jq -f "$TMP_FILTER" "$CLAUDE_CONFIG_FILE" > "$TMP_FILE"
+    mv "$TMP_FILE" "$CLAUDE_CONFIG_FILE"
+else
+    echo '{"mcpServers":{}}' | jq -f "$TMP_FILTER" > "$CLAUDE_CONFIG_FILE"
 fi
+
+rm -f "$TMP_FILTER"
 
 echo ""
 echo "=== Installation Complete ==="
