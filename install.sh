@@ -38,8 +38,7 @@ read -r PROXMOX_HOST < /dev/tty
 printf "API Token ID (e.g., root@pam!claude): "
 read -r PROXMOX_TOKEN_ID < /dev/tty
 printf "API Token Secret: "
-read -rs PROXMOX_TOKEN_SECRET < /dev/tty
-echo ""
+read -r PROXMOX_TOKEN_SECRET < /dev/tty
 
 if [ -z "$PROXMOX_HOST" ] || [ -z "$PROXMOX_TOKEN_ID" ] || [ -z "$PROXMOX_TOKEN_SECRET" ]; then
     echo "Error: All fields are required."
