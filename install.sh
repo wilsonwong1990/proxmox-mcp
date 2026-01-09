@@ -23,12 +23,12 @@ if ! command -v git &> /dev/null; then
     exit 1
 fi
 
-# Get Proxmox credentials
+# Get Proxmox credentials (read from /dev/tty to work with curl | bash)
 echo "Enter your Proxmox VE details:"
 echo ""
-read -p "Proxmox Host URL (e.g., https://192.168.1.100:8006): " PROXMOX_HOST
-read -p "API Token ID (e.g., root@pam!claude): " PROXMOX_TOKEN_ID
-read -sp "API Token Secret: " PROXMOX_TOKEN_SECRET
+read -p "Proxmox Host URL (e.g., https://192.168.1.100:8006): " PROXMOX_HOST < /dev/tty
+read -p "API Token ID (e.g., root@pam!claude): " PROXMOX_TOKEN_ID < /dev/tty
+read -sp "API Token Secret: " PROXMOX_TOKEN_SECRET < /dev/tty
 echo ""
 
 if [ -z "$PROXMOX_HOST" ] || [ -z "$PROXMOX_TOKEN_ID" ] || [ -z "$PROXMOX_TOKEN_SECRET" ]; then
