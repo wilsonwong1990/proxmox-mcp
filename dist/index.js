@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { readFileSync } from "fs";
-import { Agent } from "https";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
@@ -11,12 +10,12 @@ const PROXMOX_CA_CERT = process.env.PROXMOX_CA_CERT || "";
 const PROXMOX_ALLOW_SELF_SIGNED = process.env.PROXMOX_ALLOW_SELF_SIGNED === "true";
 const PROXMOX_READ_ONLY = process.env.PROXMOX_READ_ONLY === "true";
 // TLS configuration: support custom CA certs or explicit self-signed opt-in.
-// Never blindly disable TLS verification.
-let httpsAgent;
+// Node.js native fetch (undici) does not honour the legacy https.Agent, so we
+// configure TLS via environment variables that the runtime respects globally.
 if (PROXMOX_CA_CERT) {
     try {
-        const ca = readFileSync(PROXMOX_CA_CERT);
-        httpsAgent = new Agent({ ca });
+        readFileSync(PROXMOX_CA_CERT); // validate file is readable
+        process.env.NODE_EXTRA_CA_CERTS = PROXMOX_CA_CERT;
         console.error(`TLS: Using custom CA certificate from ${PROXMOX_CA_CERT}`);
     }
     catch (err) {
@@ -25,7 +24,7 @@ if (PROXMOX_CA_CERT) {
     }
 }
 else if (PROXMOX_ALLOW_SELF_SIGNED) {
-    httpsAgent = new Agent({ rejectUnauthorized: false });
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
     console.error("TLS: WARNING — Self-signed certificate verification disabled. Set PROXMOX_CA_CERT for proper security.");
 }
 else {
@@ -61,13 +60,6 @@ async function proxmoxRequest(endpoint, method = "GET", body) {
         headers,
         body: requestBody,
     };
-    // Apply custom TLS agent if configured
-    if (httpsAgent) {
-        // Node.js fetch supports the 'dispatcher' option via undici,
-        // but for broader compatibility we set the global agent.
-        // The agent is configured once at startup.
-        fetchOptions["agent"] = httpsAgent;
-    }
     const response = await fetch(url, fetchOptions);
     if (!response.ok) {
         const errorText = await response.text();

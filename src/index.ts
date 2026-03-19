@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import { readFileSync } from "fs";
-import { Agent } from "https";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -17,19 +16,19 @@ const PROXMOX_ALLOW_SELF_SIGNED = process.env.PROXMOX_ALLOW_SELF_SIGNED === "tru
 const PROXMOX_READ_ONLY = process.env.PROXMOX_READ_ONLY === "true";
 
 // TLS configuration: support custom CA certs or explicit self-signed opt-in.
-// Never blindly disable TLS verification.
-let httpsAgent: Agent | undefined;
+// Node.js native fetch (undici) does not honour the legacy https.Agent, so we
+// configure TLS via environment variables that the runtime respects globally.
 if (PROXMOX_CA_CERT) {
   try {
-    const ca = readFileSync(PROXMOX_CA_CERT);
-    httpsAgent = new Agent({ ca });
+    readFileSync(PROXMOX_CA_CERT); // validate file is readable
+    process.env.NODE_EXTRA_CA_CERTS = PROXMOX_CA_CERT;
     console.error(`TLS: Using custom CA certificate from ${PROXMOX_CA_CERT}`);
   } catch (err) {
     console.error(`Error: Failed to read CA certificate from ${PROXMOX_CA_CERT}: ${err}`);
     process.exit(1);
   }
 } else if (PROXMOX_ALLOW_SELF_SIGNED) {
-  httpsAgent = new Agent({ rejectUnauthorized: false });
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
   console.error("TLS: WARNING — Self-signed certificate verification disabled. Set PROXMOX_CA_CERT for proper security.");
 } else {
   console.error("TLS: Using system default certificate verification. If using self-signed certs, set PROXMOX_CA_CERT or PROXMOX_ALLOW_SELF_SIGNED=true.");
@@ -69,19 +68,11 @@ async function proxmoxRequest(
     requestBody = formData.toString();
   }
 
-  const fetchOptions: RequestInit & { dispatcher?: unknown } = {
+  const fetchOptions: RequestInit = {
     method,
     headers,
     body: requestBody,
   };
-
-  // Apply custom TLS agent if configured
-  if (httpsAgent) {
-    // Node.js fetch supports the 'dispatcher' option via undici,
-    // but for broader compatibility we set the global agent.
-    // The agent is configured once at startup.
-    (fetchOptions as Record<string, unknown>)["agent"] = httpsAgent;
-  }
 
   const response = await fetch(url, fetchOptions);
 
