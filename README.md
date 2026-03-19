@@ -1,36 +1,81 @@
 # Proxmox MCP Server
 
-MCP (Model Context Protocol) server for the Proxmox VE API. Manage VMs and containers through Claude Code.
+MCP ([Model Context Protocol](https://modelcontextprotocol.io/)) server for the Proxmox VE API. Manage VMs, containers, nodes, storage, and cluster operations through any MCP-compatible client — GitHub Copilot, Claude Code, or others.
+
+Forked from [Ruashots/proxmox-mcp](https://github.com/Ruashots/proxmox-mcp).
+
+## Additional Configuration Features
+
+- **Custom CA certificate support** via `PROXMOX_CA_CERT`
+- **Read-only mode** via `PROXMOX_READ_ONLY=true`
+- **Audit logging** for all tool invocations
+- **Multi-client documentation** for GitHub Copilot and Claude Code
 
 ## Features
 
-**55 essential tools** for day-to-day Proxmox management:
+**55 tools** for day-to-day Proxmox management:
 
 - **Nodes**: List nodes, get status and version
-- **QEMU VMs**: List, status, start/stop/reboot, snapshots, clone, migrate
-- **LXC Containers**: List, status, start/stop/reboot, snapshots, clone, migrate
+- **QEMU VMs**: List, status, start/stop/reboot, snapshots, clone, migrate, config
+- **LXC Containers**: List, status, start/stop/reboot, snapshots, clone, migrate, config
 - **Storage**: List storage, browse content, check status
 - **Tasks**: View running tasks and logs
-
-## Quick Install
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/Ruashots/proxmox-mcp/master/install.sh | bash
-```
 
 ## Prerequisites
 
 - **Node.js 18+**
-- **jq** (`sudo apt install jq`)
 - **Proxmox VE 7.0+** with API token
 
-## Manual Installation
+## Installation
 
 ```bash
-git clone https://github.com/Ruashots/proxmox-mcp.git ~/.local/share/proxmox-mcp
-cd ~/.local/share/proxmox-mcp
+git clone https://github.com/wilsonwong1990/proxmox-mcp.git
+cd proxmox-mcp
 npm install && npm run build
 ```
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `PROXMOX_HOST` | Yes | Proxmox API URL (e.g., `https://192.168.1.100:8006`) |
+| `PROXMOX_TOKEN_ID` | Yes | API token ID (e.g., `mcp@pve!copilot`) |
+| `PROXMOX_TOKEN_SECRET` | Yes | API token secret |
+| `PROXMOX_CA_CERT` | No | Path to custom CA certificate file for TLS verification |
+| `PROXMOX_ALLOW_SELF_SIGNED` | No | Set to `true` to allow self-signed certs (less secure than `PROXMOX_CA_CERT`) |
+| `PROXMOX_READ_ONLY` | No | Set to `true` to restrict to read-only (GET) operations |
+
+### GitHub Copilot CLI
+
+Copy the example config and edit with your values:
+
+```bash
+cp .github/copilot/mcp.json.example .github/copilot/mcp.json
+```
+
+Or add to your user-level config at `~/.config/github-copilot/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "proxmox-mcp": {
+      "command": "node",
+      "args": ["/path/to/proxmox-mcp/dist/index.js"],
+      "env": {
+        "PROXMOX_HOST": "https://192.168.1.100:8006",
+        "PROXMOX_TOKEN_ID": "mcp@pve!copilot",
+        "PROXMOX_TOKEN_SECRET": "your-token-secret",
+        "PROXMOX_READ_ONLY": "true",
+        "PROXMOX_CA_CERT": "/path/to/proxmox-ca.pem"
+      }
+    }
+  }
+}
+```
+
+### Claude Code
 
 Add to `~/.claude.json`:
 
@@ -39,18 +84,67 @@ Add to `~/.claude.json`:
   "mcpServers": {
     "proxmox-mcp": {
       "command": "node",
-      "args": ["/home/YOUR_USER/.local/share/proxmox-mcp/dist/index.js"],
+      "args": ["/path/to/proxmox-mcp/dist/index.js"],
       "env": {
         "PROXMOX_HOST": "https://192.168.1.100:8006",
-        "PROXMOX_TOKEN_ID": "root@pam!claude",
-        "PROXMOX_TOKEN_SECRET": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+        "PROXMOX_TOKEN_ID": "mcp@pve!copilot",
+        "PROXMOX_TOKEN_SECRET": "your-token-secret",
+        "PROXMOX_READ_ONLY": "true",
+        "PROXMOX_CA_CERT": "/path/to/proxmox-ca.pem"
       }
     }
   }
 }
 ```
 
-## Tools
+## Security Best Practices
+
+### 1. Create a Dedicated API User
+
+Create a least-privilege user rather than using root:
+
+```bash
+# On your Proxmox host:
+pveum user add mcp@pve
+pveum aclmod / -user mcp@pve -role PVEAuditor    # read-only access
+pveum user token add mcp@pve copilot
+```
+
+For read-write access, create a custom role with only the permissions you need:
+
+```bash
+pveum role add MCPOperator -privs "VM.PowerMgmt,VM.Console,VM.Monitor,VM.Snapshot,VM.Snapshot.Rollback,VM.Audit,Datastore.Audit,Sys.Audit"
+pveum aclmod / -user mcp@pve -role MCPOperator
+```
+
+### 2. Use Proper TLS
+
+Export your Proxmox CA certificate and reference it with `PROXMOX_CA_CERT`:
+
+```bash
+# Copy from Proxmox host
+scp root@proxmox:/etc/pve/pve-root-ca.pem ./proxmox-ca.pem
+
+# Then set in your MCP config env:
+"PROXMOX_CA_CERT": "/path/to/proxmox-ca.pem"
+```
+
+Use `PROXMOX_ALLOW_SELF_SIGNED=true` as a temporary fallback during initial setup if needed.
+
+### 3. Start with Read-Only Mode
+
+Set `PROXMOX_READ_ONLY=true` initially. This filters the tool list to only GET operations. Graduate to read-write once you're comfortable.
+
+### 4. Audit Logging
+
+All tool invocations are logged to stderr with timestamps:
+
+```
+[2026-03-19T02:15:00.000Z] AUDIT: tool=pve_list_nodes args={}
+[2026-03-19T02:15:01.000Z] AUDIT: tool=pve_get_nodes_qemu_status_current args={"node":"pve","vmid":"100"}
+```
+
+## Tools Reference
 
 ### Nodes
 | Tool | Description |
@@ -124,13 +218,6 @@ Add to `~/.claude.json`:
 - "Create a snapshot of container 101 called before-update"
 - "Show storage status on node pve"
 - "What tasks are running on node pve?"
-
-## Creating an API Token
-
-1. Proxmox UI → Datacenter → Permissions → API Tokens → Add
-2. Select user (e.g., `root@pam`), enter Token ID (e.g., `claude`)
-3. Uncheck "Privilege Separation" for full access
-4. Copy the secret immediately!
 
 ## License
 

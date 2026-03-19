@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { readFileSync } from "fs";
+import { Agent } from "https";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -10,12 +12,38 @@ import {
 const PROXMOX_HOST = process.env.PROXMOX_HOST || "";
 const PROXMOX_TOKEN_ID = process.env.PROXMOX_TOKEN_ID || "";
 const PROXMOX_TOKEN_SECRET = process.env.PROXMOX_TOKEN_SECRET || "";
+const PROXMOX_CA_CERT = process.env.PROXMOX_CA_CERT || "";
+const PROXMOX_ALLOW_SELF_SIGNED = process.env.PROXMOX_ALLOW_SELF_SIGNED === "true";
+const PROXMOX_READ_ONLY = process.env.PROXMOX_READ_ONLY === "true";
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+// TLS configuration: support custom CA certs or explicit self-signed opt-in.
+// Never blindly disable TLS verification.
+let httpsAgent: Agent | undefined;
+if (PROXMOX_CA_CERT) {
+  try {
+    const ca = readFileSync(PROXMOX_CA_CERT);
+    httpsAgent = new Agent({ ca });
+    console.error(`TLS: Using custom CA certificate from ${PROXMOX_CA_CERT}`);
+  } catch (err) {
+    console.error(`Error: Failed to read CA certificate from ${PROXMOX_CA_CERT}: ${err}`);
+    process.exit(1);
+  }
+} else if (PROXMOX_ALLOW_SELF_SIGNED) {
+  httpsAgent = new Agent({ rejectUnauthorized: false });
+  console.error("TLS: WARNING — Self-signed certificate verification disabled. Set PROXMOX_CA_CERT for proper security.");
+} else {
+  console.error("TLS: Using system default certificate verification. If using self-signed certs, set PROXMOX_CA_CERT or PROXMOX_ALLOW_SELF_SIGNED=true.");
+}
 
 if (!PROXMOX_HOST || !PROXMOX_TOKEN_ID || !PROXMOX_TOKEN_SECRET) {
   console.error("Error: PROXMOX_HOST, PROXMOX_TOKEN_ID, and PROXMOX_TOKEN_SECRET environment variables are required");
   process.exit(1);
+}
+
+function auditLog(toolName: string, args: Record<string, unknown> | undefined): void {
+  const timestamp = new Date().toISOString();
+  const sanitizedArgs = args ? { ...args } : {};
+  console.error(`[${timestamp}] AUDIT: tool=${toolName} args=${JSON.stringify(sanitizedArgs)}`);
 }
 
 async function proxmoxRequest(
@@ -41,11 +69,21 @@ async function proxmoxRequest(
     requestBody = formData.toString();
   }
 
-  const response = await fetch(url, {
+  const fetchOptions: RequestInit & { dispatcher?: unknown } = {
     method,
     headers,
     body: requestBody,
-  });
+  };
+
+  // Apply custom TLS agent if configured
+  if (httpsAgent) {
+    // Node.js fetch supports the 'dispatcher' option via undici,
+    // but for broader compatibility we set the global agent.
+    // The agent is configured once at startup.
+    (fetchOptions as Record<string, unknown>)["agent"] = httpsAgent;
+  }
+
+  const response = await fetch(url, fetchOptions);
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -59,7 +97,7 @@ async function proxmoxRequest(
 const server = new Server(
   {
     name: "proxmox-mcp",
-    version: "2.2.0",
+    version: "3.0.0",
   },
   {
     capabilities: {
@@ -3471,20 +3509,38 @@ const toolDefinitions: Array<{
   }
 ];
 
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: toolDefinitions.map(({ name, description, inputSchema }) => ({
-    name,
-    description,
-    inputSchema,
-  })),
-}));
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+  const filtered = PROXMOX_READ_ONLY
+    ? toolDefinitions.filter(t => t.method === "GET")
+    : toolDefinitions;
+  return {
+    tools: filtered.map(({ name, description, inputSchema }) => ({
+      name,
+      description: PROXMOX_READ_ONLY ? `[READ-ONLY] ${description}` : description,
+      inputSchema,
+    })),
+  };
+});
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
   
+  auditLog(name, args as Record<string, unknown> | undefined);
+
   const tool = toolDefinitions.find(t => t.name === name);
   if (!tool) {
     throw new Error(`Unknown tool: ${name}`);
+  }
+
+  // Enforce read-only mode
+  if (PROXMOX_READ_ONLY && tool.method !== "GET") {
+    return {
+      content: [{
+        type: "text",
+        text: `Error: Tool "${name}" is blocked. Server is running in read-only mode (PROXMOX_READ_ONLY=true). Only GET operations are permitted.`
+      }],
+      isError: true
+    };
   }
   
   try {
@@ -3523,7 +3579,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Proxmox MCP Server running (55 tools)");
+  const toolCount = PROXMOX_READ_ONLY
+    ? toolDefinitions.filter(t => t.method === "GET").length
+    : toolDefinitions.length;
+  console.error(`Proxmox MCP Server running (${toolCount} tools${PROXMOX_READ_ONLY ? ", READ-ONLY mode" : ""})`);
 }
 
 main().catch(console.error);

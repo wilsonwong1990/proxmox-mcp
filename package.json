@@ -1,7 +1,7 @@
 {
   "name": "proxmox-mcp",
-  "version": "2.2.0",
-  "description": "MCP server for Proxmox VE API - manage VMs, containers, nodes, storage, and cluster via Claude Code",
+  "version": "3.0.0",
+  "description": "MCP server for Proxmox VE API - manage VMs, containers, nodes, storage, and cluster. Works with any MCP client (GitHub Copilot, Claude Code, etc).",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
@@ -16,9 +16,10 @@
     "proxmox",
     "mcp",
     "model-context-protocol",
-    "claude",
     "virtualization",
-    "api"
+    "api",
+    "copilot",
+    "homelab"
   ],
   "author": "",
   "license": "MIT",
